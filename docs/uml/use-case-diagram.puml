@@ -1,0 +1,59 @@
+@startuml UseCaseDiagram
+title ExamEase — Use Case Diagram (SAT II Assessment)
+skinparam style strictuml
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+left to right direction
+
+actor "User\n(Candidate)" as User
+actor "Administrator\n(Controller)" as Admin
+
+rectangle "ExamEase System Boundary" {
+  ' Common Authentication
+  usecase "UC1: Authenticate with Demo Account" as UC1
+
+  ' Candidate Use Cases
+  usecase "UC2: Explore Examination Slots" as UC2
+  usecase "UC3: Filter and Search Slots" as UC3
+  usecase "UC4: Configure Seat Quantity & Candidate Details" as UC4
+  usecase "UC5: Confirm Reservation Atomically" as UC5
+  usecase "UC6: Cancel Confirmed Reservation" as UC6
+  usecase "UC7: Inspect Dossier & Fare Snapshot" as UC7
+
+  ' Subordinate / Included steps
+  usecase "Validate Details & Quantity (BR1, BR5)" as UC_Val
+  usecase "Verify Real-Time Availability (BR2)" as UC_Avail
+  usecase "Snapshot Fare & Deduct Seat (BR3, BR7)" as UC_Fare
+  usecase "Replenish Reserved Capacity (BR9)" as UC_Restore
+
+  ' Administrator Use Cases
+  usecase "UC8: Monitor Global Registrations" as UC8
+  usecase "UC9: Advance Operational Status" as UC9
+  usecase "UC10: Enforce Authorization & Data Isolation" as UC10
+  usecase "Validate Status Transition (BR8)" as UC_Trans
+}
+
+' User Associations
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+
+' Admin Associations
+Admin --> UC1
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+
+' Include relationships
+UC5 ..> UC_Val : <<include>>
+UC5 ..> UC_Avail : <<include>>
+UC5 ..> UC_Fare : <<include>>
+UC6 ..> UC_Restore : <<include>>
+UC9 ..> UC_Trans : <<include>>
+
+@enduml

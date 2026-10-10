@@ -1,0 +1,137 @@
+@startuml ClassDiagram
+title ExamEase — System Class Diagram (Domain Models & Services)
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CHECKED_IN
+  BOARDED
+  COMPLETED
+  CANCELLED
+}
+
+class User {
+  - _id: ObjectId
+  - name: String
+  - email: String
+  - password: String
+  - role: UserRole
+  - status: AccountStatus
+  - createdAt: Date
+  - updatedAt: Date
+  + comparePassword(candidatePassword: String): Boolean
+  + toJSON(): Object
+}
+
+class Resource {
+  - _id: ObjectId
+  - resourceId: String
+  - name: String
+  - category: String
+  - rate: Number
+  - availability: Number
+  - status: AccountStatus
+  - createdAt: Date
+  - updatedAt: Date
+}
+
+class Schedule {
+  - _id: ObjectId
+  - scheduleId: String
+  - resourceId: String
+  - examDate: String
+  - startTime: String
+  - endTime: String
+  - category: String
+  - venue: String
+  - status: String
+  - isDemoData: Boolean
+}
+
+class Reservation {
+  - _id: ObjectId
+  - bookingReference: String
+  - userId: ObjectId
+  - resourceId: String
+  - status: ReservationStatus
+  - bookingDate: String
+  - candidateName: String
+  - candidatePhone: String
+  - candidateIdRef: String
+  - createdAt: Date
+  - updatedAt: Date
+}
+
+class ReservationItem {
+  - _id: ObjectId
+  - reservationId: ObjectId
+  - bookingReference: String
+  - userId: ObjectId
+  - resourceId: String
+  - resourceRefSnapshot: Object
+  - quantity: Number
+  - unitRateSnapshot: Number
+  - baseAmount: Number
+  - bookingCharge: Number
+  - grandTotal: Number
+  - createdAt: Date
+}
+
+class BookingStatusHistory {
+  - _id: ObjectId
+  - referenceId: String
+  - reservationId: ObjectId
+  - actorId: ObjectId
+  - actorName: String
+  - actorRole: String
+  - oldStatus: String
+  - newStatus: String
+  - note: String
+  - eventAt: Date
+}
+
+class AvailabilityService {
+  + {static} getResourceById(resourceId: String): Promise<Resource>
+  + {static} checkAvailability(resourceId: String, requestedQuantity: Number): Promise<Object>
+  + {static} listResources(query: Object): Promise<Resource[]>
+  + {static} replenishAvailability(resourceId: String, quantity: Number, session: Object): Promise<Resource>
+}
+
+class BookingService {
+  + {static} generateBookingReference(): String
+  + {static} createBooking(user: User, payload: Object): Promise<Object>
+  + {static} cancelBooking(bookingIdOrRef: String, user: User): Promise<Object>
+  + {static} advanceOperationalStatus(bookingIdOrRef: String, adminUser: User, targetStatus: String): Promise<Reservation>
+  + {static} getBookingDetails(bookingIdOrRef: String, requestingUser: User): Promise<Object>
+  + {static} getUserBookings(userId: ObjectId): Promise<Object[]>
+  + {static} getAllBookingsForAdmin(query: Object): Promise<Object>
+}
+
+' Relationships & Multiplicities
+User "1" --> "0..*" Reservation : places >
+Resource "1" --> "0..*" Schedule : scheduled for >
+Resource "1" --> "0..*" Reservation : allocated in >
+Reservation "1" *-- "1" ReservationItem : contains snapshot >
+Reservation "1" --> "1..*" BookingStatusHistory : audits transitions >
+User "1" --> "0..*" BookingStatusHistory : records as actor >
+
+' Service Dependencies
+BookingService ..> AvailabilityService : uses for capacity check & replenishment >
+BookingService ..> Reservation : creates & manages >
+BookingService ..> ReservationItem : creates snapshots >
+BookingService ..> BookingStatusHistory : logs transitions >
+BookingService ..> Resource : modifies availability >
+AvailabilityService ..> Resource : queries & updates >
+
+@enduml
